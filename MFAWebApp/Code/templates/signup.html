@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Signup Form</title>
+    <style>
+      /* center the form */
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      /* style the input fields */
+      input[type="text"], input[type="email"], input[type="password"] {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border: none;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+      /* style the image upload button */
+      .image-upload {
+        display: inline-block;
+        margin-bottom: 10px;
+        width: 200px;
+        height: 200px;
+        background-color: #f3f3f3;
+        background-size: cover;
+        background-position: center;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        overflow: hidden;
+      }
+      .image-upload input[type="file"] {
+        display: none;
+      }
+      /* style the submit button */
+      input[type="submit"] {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+        border: none;
+        background-color: #4285f4;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <form action="/signup" method="post" enctype="multipart/form-data">
+      <h2>Sign up</h2>
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+      <label for="image">Profile Image:</label>
+      <input type="file" name="image" required>
+      <input type="submit" value="Sign up">
+    </form>
+  </body>
+</html>

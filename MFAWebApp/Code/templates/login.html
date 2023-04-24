@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>User Login</title>
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+  </head>
+  <body>
+    <form action="/video_feed" method="post">
+      <h2>User Login</h2>
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required>
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+      <input type="submit" value="Login">
+    </form>
+    <div style="text-align:center;">
+      <p>Don't have an account?</p>
+      <a href="/signup">Sign up</a>
+    </div>
+  </body>
+</html>

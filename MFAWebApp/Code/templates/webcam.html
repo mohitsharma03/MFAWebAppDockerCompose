@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<span class="error"></span>
+<br>
+<label for="interval">Time between images in seconds: </label>
+<input id="interval" type="text" value="1" min="1" pattern="\d+">
+<br>
+<button id="start">Start</button>
+<br>
+<label for="hideVid">Hide video element: </label>
+<input id="hideVid" type="checkbox">
+<div style="display: flex">
+<video autoplay muted playsinline></video>
+<img style="margin-left: 15px;" id="myImg" src = "">
+
+</div>
+<p id = "ErrorText">
+</p>
+<div>
+  <div>Offences</div>
+  <div>No Faces: <span id="NoFaces"></span></div>
+  <div>Multiple Faces: <span id="MultipleFaces"></span></div>
+  <div>Unverified Face: <span id="UnverifiedFace"></span></div>
+  <div>Spoof: <span id="Spoof"></span></div>
+</div>
+<br>
+<button id="stop" disabled>Stop</button>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+
+
+// show an error if not supported
+if (typeof OffscreenCanvas === "undefined") {
+  const supportError = "OffscreenCanvas is not supported by your browser";
+  const errorSpan = document.querySelector("span.error");
+  errorSpan.style = "color:red;font-size:larger;font-weight:bold";
+  errorSpan.innerText = supportError;
+  console.error(supportError);
+}
+
+
+
+
+let user = JSON.parse('{{ user | tojson }}');
+console.log(user)
+const NoFaces = document.querySelector("span#NoFaces");
+const MultipleFaces = document.querySelector("span#MultipleFaces");
+const UnverifiedFace = document.querySelector("span#UnverifiedFace");
+const Spoof = document.querySelector("span#Spoof");
+var NFCount = 0;
+var MFCount = 0;
+var UVCount = 0;
+var SFCount = 0;
+var Flag =  0;
+
+const Limit = 30;
+
+NoFaces.innerHTML = NFCount.toString()
+MultipleFaces.innerHTML = MFCount.toString()
+UnverifiedFace.innerHTML = UVCount.toString()
+Spoof.innerHTML = SFCount.toString()
+
+const startBtn = document.querySelector("button#start");
+const stopBtn = document.querySelector("button#stop");
+const hideVid = document.querySelector("input#hideVid");
+const intervalSec = document.querySelector("input#interval");
+const videoElem = document.querySelector("video");
+let storage = []; // Use this array as our database
+
+//console.log(url);
+async function sendImagesToServer(prev,curr){
+    $.post('/sendImages',
+    {
+        label: "input_images",
+        prev: prev,
+        curr: curr,
+        flag: Flag,
+        user: user[3] 
+    },
+    function(result) {   // success callback function
+        var img = result.img.slice(2,-1)
+        document.getElementById("myImg").src = 'data:image/jpeg;base64,' + img;
+        var code = result.code;
+        switch (code) {
+          case "NOFACES":
+            NFCount+=1;
+            NoFaces.innerHTML = NFCount.toString()
+            Flag = 1;
+            document.querySelector("p#ErrorText").innerHTML = "NO FACES"
+            break;
+          
+          case "MULTIPLEFACES":
+            MFCount += 1;
+            MultipleFaces.innerHTML = MFCount.toString()
+            Flag = 1;
+            document.querySelector("p#ErrorText").innerHTML = "MULTIPLE FACES"
+            break;
+          
+          case "NOTVERIFIED": 
+            UVCount += 1;
+            UnverifiedFace.innerHTML = UVCount.toString()
+            Flag = 1;
+            document.querySelector("p#ErrorText").innerHTML = "NOT VERIFIED"
+            break;
+          
+          case "SPOOF":
+            SFCount += 1;
+            Spoof.innerHTML = SFCount.toString()
+            Flag = 1;
+            document.querySelector("p#ErrorText").innerHTML = "SPOOFED FACE"
+            break;
+        
+          case "VERIFIED":
+            Flag = 0;
+            document.querySelector("p#ErrorText").innerHTML = "VERIFIED"
+            break;  
+
+          default:
+          document.querySelector("p#ErrorText").innerHTML = "NO CHANGE"
+            break;
+        }
+        if(NFCount + MFCount + SFCount  + UVCount > Limit){
+          clearInterval(captureInterval);
+          // close the camera
+          stream.getTracks().forEach((track) => track.stop());
+          document.querySelector("p#ErrorText").innerHTML = "ERRORS EXCEEDED, STOPPING FEED..."
+
+        }
+    });
+
+}
+
+async function showImages(storage) {
+    await sendImagesToServer(storage[0],storage[1])
+  }
+let stream, captureInterval;
+
+hideVid.onclick = () => (videoElem.hidden = hideVid.checked);
+startBtn.onclick = async () => {
+  startBtn.disabled = true;
+
+  stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  videoElem.onplaying = () =>
+    console.log("video playing stream:", videoElem.srcObject);
+  videoElem.srcObject = stream;
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const interval =
+    (parseInt(intervalSec.value) >= 1 ? intervalSec.value * 1 : 1) * 1000;
+  captureInterval = setInterval(async () => {
+    canvas.height = videoElem.videoHeight;
+    canvas.width = videoElem.videoWidth;
+    ctx.drawImage(videoElem, 0, 0);
+    const dataUrl = canvas.toDataURL();
+    storage.push(dataUrl);
+    if(storage.length==2){
+        await showImages(storage)
+        storage = [storage[1]]
+    }
+    
+  }, interval);
+
+  stopBtn.disabled = false;
+};
+
+stopBtn.onclick = () => {
+  // stop capture
+  startBtn.disabled = false;
+  clearInterval(captureInterval);
+
+  // close the camera
+  stream.getTracks().forEach((track) => track.stop());
+};
+
+
+</script>
+
+</html>

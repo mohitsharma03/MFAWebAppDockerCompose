@@ -1,0 +1,19 @@
+services:
+  pythonapp:
+    build: ./MFAWebApp/
+    command: sh -c "sleep 10s ; python3 ./Code/app.py"
+    depends_on:
+      - mysql
+    ports:
+      - '5000:5000'
+
+  mysql:
+    build: ./MysqlDb/
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'mydatabase'
+      #MYSQL_USER: 'root'
+      MYSQL_ROOT_PASSWORD: 'mysql@123'
+      #MYSQL_HOST: 'localhost'
+    ports:
+      - '3306:3306'
